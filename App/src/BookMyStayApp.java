@@ -1,7 +1,55 @@
-import java.util.LinkedList;
-import java.util.Queue;
+import java.util.*;
+
 
 public class BookMyStayApp {
+
+    static class Room {
+        private String roomType;
+        private double pricePerNight;
+
+        public Room(String roomType, double pricePerNight) {
+            this.roomType = roomType;
+            this.pricePerNight = pricePerNight;
+        }
+
+        public String getRoomType() {
+            return roomType;
+        }
+
+        public double getPrice() {
+            return pricePerNight;
+        }
+    }
+    static class RoomInventory {
+        private Map<String, Integer> inventory;
+
+        public RoomInventory() {
+            inventory = new HashMap<>();
+            inventory.put("Single Room", 5);
+            inventory.put("Double Room", 3);
+            inventory.put("Suite Room", 2);
+        }
+
+        public int getAvailability(String roomType) {
+            return inventory.getOrDefault(roomType, 0);
+        }
+
+        public boolean allocateRoom(String roomType) {
+            int available = getAvailability(roomType);
+            if (available > 0) {
+                inventory.put(roomType, available - 1);
+                return true;
+            }
+            return false;
+        }
+
+        public void displayInventory() {
+            System.out.println("=== Current Inventory ===");
+            for (Map.Entry<String, Integer> entry : inventory.entrySet()) {
+                System.out.println(entry.getKey() + " -> Available: " + entry.getValue());
+            }
+        }
+    }
 
     static class Reservation {
         private String guestName;
@@ -20,7 +68,6 @@ public class BookMyStayApp {
             return roomType;
         }
     }
-
     static class BookingQueue {
         private Queue<Reservation> queue;
 
@@ -33,22 +80,8 @@ public class BookMyStayApp {
             System.out.println("Booking request submitted by " + res.getGuestName() + " for " + res.getRoomType());
         }
 
-        public Reservation peekNext() {
-            return queue.peek();
-        }
-
-        public Reservation processNext() {
+        public Reservation pollRequest() {
             return queue.poll();
-        }
-        public void displayQueue() {
-            if(queue.isEmpty()) {
-                System.out.println("No booking requests in the queue.");
-                return;
-            }
-            System.out.println("\nCurrent Booking Queue:");
-            for(Reservation res : queue) {
-                System.out.println(res.getGuestName() + " -> " + res.getRoomType());
-            }
         }
 
         public boolean isEmpty() {
@@ -56,30 +89,69 @@ public class BookMyStayApp {
         }
     }
 
+    static class BookingService {
+        private RoomInventory inventory;
+        private Map<String, Set<String>> allocatedRooms;
+        private int roomCounter = 1;
+
+        public BookingService(RoomInventory inventory) {
+            this.inventory = inventory;
+            allocatedRooms = new HashMap<>();
+        }
+
+        public void processReservation(Reservation res) {
+            String type = res.getRoomType();
+
+            if (inventory.getAvailability(type) <= 0) {
+                System.out.println("No available rooms for " + type + ". Cannot allocate for " + res.getGuestName());
+                return;
+            }
+m
+            boolean success = inventory.allocateRoom(type);
+            if (success) {
+                // Generate unique room ID
+                String roomID = type.substring(0, 2).toUpperCase() + "-" + roomCounter++;
+                allocatedRooms.computeIfAbsent(type, k -> new HashSet<>());
+                allocatedRooms.get(type).add(roomID);
+
+                System.out.println("Reservation confirmed for " + res.getGuestName() +
+                        ". Assigned Room ID: " + roomID + " (" + type + ")");
+            }
+        }
+
+        public void displayAllocatedRooms() {
+            System.out.println("\n=== Allocated Rooms ===");
+            for (Map.Entry<String, Set<String>> entry : allocatedRooms.entrySet()) {
+                System.out.println(entry.getKey() + ": " + entry.getValue());
+            }
+        }
+    }
+
     public static void main(String[] args) {
         System.out.println("Welcome to Book My Stay App");
-        System.out.println("Booking Request Queue Simulation v5.1\n");
+        System.out.println("Reservation & Room Allocation Service v6.1\n");
 
-
+        RoomInventory inventory = new RoomInventory();
         BookingQueue bookingQueue = new BookingQueue();
 
         bookingQueue.submitRequest(new Reservation("Alice", "Single Room"));
         bookingQueue.submitRequest(new Reservation("Bob", "Double Room"));
         bookingQueue.submitRequest(new Reservation("Charlie", "Suite Room"));
         bookingQueue.submitRequest(new Reservation("Diana", "Single Room"));
+        bookingQueue.submitRequest(new Reservation("Eve", "Single Room"));
+        bookingQueue.submitRequest(new Reservation("Frank", "Suite Room")); // may exceed inventory
 
+        BookingService service = new BookingService(inventory);
 
-        bookingQueue.displayQueue();
-
-        System.out.println("\nProcessing requests in order (simulation)...");
-        while(!bookingQueue.isEmpty()) {
-            Reservation next = bookingQueue.processNext();
-            System.out.println("Next request: " + next.getGuestName() + " -> " + next.getRoomType());
+        System.out.println("\nProcessing reservations...\n");
+        while (!bookingQueue.isEmpty()) {
+            Reservation res = bookingQueue.pollRequest();
+            service.processReservation(res);
         }
+        service.displayAllocatedRooms();
+        System.out.println();
+        inventory.displayInventory();
 
-        bookingQueue.displayQueue();
-
-        System.out.println("\nAll booking requests have been processed (queue is now empty).");
-        System.out.println("Thank you for using Book My Stay!");
+        System.out.println("\nAll reservations processed. Thank you for using Book My Stay!");
     }
 }

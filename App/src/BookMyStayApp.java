@@ -1,16 +1,19 @@
-public class BookMyStayApp {
-    public static void main(String[] args) {
+abstract class Room {
 
-        // Display welcome message
-        System.out.println("Welcome to Book My Stay App");
+    protected String roomType;
+    protected int numberOfBeds;
+    protected double pricePerNight;
 
-        // Display application details
-        System.out.println("Hotel Booking System v1.0");
+    public Room(String roomType, int numberOfBeds, double pricePerNight) {
+        this.roomType = roomType;
+        this.numberOfBeds = numberOfBeds;
+        this.pricePerNight = pricePerNight;
+    }
 
-        // Inform user that application started successfully
-        System.out.println("Application started successfully.");
-
-        // End message
-        System.out.println("Thank you for using Book My Stay!");
+    // Method to display room details
+    public void displayRoomDetails() {
+        System.out.println("Room Type: " + roomType);
+        System.out.println("Beds: " + numberOfBeds);
+        System.out.println("Price per night: ₹" + pricePerNight);
     }
 }

@@ -1,95 +1,85 @@
 import java.util.*;
+
 public class BookMyStayApp {
 
+    static class InvalidBookingException extends Exception {
+        public InvalidBookingException(String message) {
+            super(message);
+        }
+    }
     static class Reservation {
         private String reservationID;
         private String guestName;
         private String roomType;
 
-        public Reservation(String reservationID, String guestName, String roomType) {
+        public Reservation(String reservationID, String guestName, String roomType) throws InvalidBookingException {
+            if (guestName == null || guestName.isBlank()) {
+                throw new InvalidBookingException("Guest name cannot be empty.");
+            }
+            if (!List.of("Single Room", "Double Room", "Suite Room").contains(roomType)) {
+                throw new InvalidBookingException("Invalid room type: " + roomType);
+            }
+
             this.reservationID = reservationID;
             this.guestName = guestName;
             this.roomType = roomType;
         }
 
-        public String getReservationID() {
-            return reservationID;
-        }
-
-        public String getGuestName() {
-            return guestName;
-        }
-
-        public String getRoomType() {
-            return roomType;
-        }
+        public String getReservationID() { return reservationID; }
+        public String getGuestName() { return guestName; }
+        public String getRoomType() { return roomType; }
 
         @Override
         public String toString() {
             return reservationID + " - " + guestName + " (" + roomType + ")";
         }
     }
+    static class Inventory {
+        private Map<String, Integer> availableRooms;
 
-    static class BookingHistory {
-        private List<Reservation> confirmedBookings;
+        public Inventory() {
+            availableRooms = new HashMap<>();
+            availableRooms.put("Single Room", 2);
+            availableRooms.put("Double Room", 2);
+            availableRooms.put("Suite Room", 1);
+        }
 
-        public BookingHistory() {
-            confirmedBookings = new ArrayList<>();
+        public void bookRoom(Reservation res) throws InvalidBookingException {
+            int count = availableRooms.getOrDefault(res.getRoomType(), 0);
+            if (count <= 0) {
+                throw new InvalidBookingException("No available rooms for type: " + res.getRoomType());
+            }
+            availableRooms.put(res.getRoomType(), count - 1);
+            System.out.println("Room booked successfully: " + res);
         }
-        public void addReservation(Reservation res) {
-            confirmedBookings.add(res);
-            System.out.println("Booking added to history: " + res);
-        }
-        public List<Reservation> getAllBookings() {
-            return Collections.unmodifiableList(confirmedBookings);
-        }
-    }
-    static class BookingReportService {
-        private BookingHistory history;
 
-        public BookingReportService(BookingHistory history) {
-            this.history = history;
-        }
-        public void generateReport() {
-            System.out.println("\n=== Booking Report ===");
-            if (history.getAllBookings().isEmpty()) {
-                System.out.println("No bookings yet.");
-                return;
-            }
-            for (Reservation res : history.getAllBookings()) {
-                System.out.println(res);
-            }
-        }
-        public void generateSummary() {
-            System.out.println("\n=== Booking Summary ===");
-            Map<String, Integer> summary = new HashMap<>();
-            for (Reservation res : history.getAllBookings()) {
-                summary.put(res.getRoomType(), summary.getOrDefault(res.getRoomType(), 0) + 1);
-            }
-            for (Map.Entry<String, Integer> entry : summary.entrySet()) {
-                System.out.println(entry.getKey() + ": " + entry.getValue() + " bookings");
+        public void displayAvailability() {
+            System.out.println("\n=== Room Availability ===");
+            for (Map.Entry<String, Integer> entry : availableRooms.entrySet()) {
+                System.out.println(entry.getKey() + ": " + entry.getValue() + " available");
             }
         }
     }
     public static void main(String[] args) {
         System.out.println("Welcome to Book My Stay App");
-        System.out.println("Booking History & Reporting v8.1\n");
+        System.out.println("Error Handling & Validation v9.1\n");
 
-        BookingHistory history = new BookingHistory();
+        Inventory inventory = new Inventory();
 
-        Reservation res1 = new Reservation("R-101", "Alice", "Single Room");
-        Reservation res2 = new Reservation("R-102", "Bob", "Double Room");
-        Reservation res3 = new Reservation("R-103", "Charlie", "Suite Room");
+        try {
+            Reservation r1 = new Reservation("R-101", "Alice", "Single Room");
+            Reservation r2 = new Reservation("R-102", "", "Double Room");   // Invalid guest name
+            Reservation r3 = new Reservation("R-103", "Charlie", "Penthouse"); // Invalid room type
 
-        history.addReservation(res1);
-        history.addReservation(res2);
-        history.addReservation(res3);
+            inventory.bookRoom(r1);
+            inventory.bookRoom(r2);
+            inventory.bookRoom(r3);
 
-        BookingReportService reportService = new BookingReportService(history);
+        } catch (InvalidBookingException e) {
+            System.out.println("Booking error: " + e.getMessage());
+        }
 
-        reportService.generateReport();
-        reportService.generateSummary();
-
-        System.out.println("\nAll booking data tracked successfully in memory.");
+        inventory.displayAvailability();
+        System.out.println("\nSystem remains stable after validation errors.");
     }
 }

@@ -1,9 +1,31 @@
 import java.util.HashMap;
 import java.util.Map;
+
 public class BookMyStayApp {
 
-    static class RoomInventory {
+    static class Room {
+        private String roomType;
+        private int numberOfBeds;
+        private double pricePerNight;
 
+        public Room(String roomType, int numberOfBeds, double pricePerNight) {
+            this.roomType = roomType;
+            this.numberOfBeds = numberOfBeds;
+            this.pricePerNight = pricePerNight;
+        }
+
+        public void displayRoomDetails() {
+            System.out.println("Room Type: " + roomType);
+            System.out.println("Beds: " + numberOfBeds);
+            System.out.println("Price per night: ₹" + pricePerNight);
+        }
+
+        public String getRoomType() {
+            return roomType;
+        }
+    }
+
+    static class RoomInventory {
         private Map<String, Integer> inventory;
 
         public RoomInventory() {
@@ -17,14 +39,6 @@ public class BookMyStayApp {
             return inventory.getOrDefault(roomType, 0);
         }
 
-        public void updateAvailability(String roomType, int count) {
-            if (inventory.containsKey(roomType)) {
-                inventory.put(roomType, inventory.get(roomType) + count);
-            } else {
-                System.out.println("Room type not found!");
-            }
-        }
-
         public void displayInventory() {
             System.out.println("=== Room Inventory ===");
             for (Map.Entry<String, Integer> entry : inventory.entrySet()) {
@@ -33,21 +47,48 @@ public class BookMyStayApp {
         }
     }
 
-    public static void main(String[] args) {
+    static class RoomSearchService {
+        private RoomInventory inventory;
+        private Room[] rooms;
 
+        public RoomSearchService(RoomInventory inventory, Room[] rooms) {
+            this.inventory = inventory;
+            this.rooms = rooms;
+        }
+
+        public void searchAvailableRooms() {
+            System.out.println("\n=== Available Rooms ===");
+            boolean anyAvailable = false;
+            for (Room room : rooms) {
+                int available = inventory.getAvailability(room.getRoomType());
+                if (available > 0) {
+                    room.displayRoomDetails();
+                    System.out.println("Available: " + available + "\n");
+                    anyAvailable = true;
+                }
+            }
+            if (!anyAvailable) {
+                System.out.println("No rooms available at the moment.");
+            }
+        }
+    }
+
+    public static void main(String[] args) {
         System.out.println("Welcome to Book My Stay App");
-        System.out.println("Hotel Booking System v3.1\n");
+        System.out.println("Hotel Booking System v4.1\n");
 
         RoomInventory inventory = new RoomInventory();
 
-        inventory.displayInventory();
+        Room[] rooms = {
+                new Room("Single Room", 1, 2000),
+                new Room("Double Room", 2, 3500),
+                new Room("Suite Room", 3, 6000)
+        };
 
-        System.out.println("\nUpdating availability...\n");
-        inventory.updateAvailability("Single Room", -1);
-        inventory.updateAvailability("Suite Room", +1);
+        RoomSearchService searchService = new RoomSearchService(inventory, rooms);
 
-        inventory.displayInventory();
+        searchService.searchAvailableRooms();
 
-        System.out.println("\nThank you for using Book My Stay!");
+        System.out.println("Thank you for using Book My Stay!");
     }
 }
